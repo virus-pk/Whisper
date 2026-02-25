@@ -1,8 +1,15 @@
-import SwiftUI
 import AppKit
+import SwiftUI
+import UniformTypeIdentifiers
 
 @main
 struct WhisperGUIApp: App {
+    init() {
+        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        print("WhisperGUI: App starting...")
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -47,7 +54,9 @@ struct ContentView: View {
                     .truncationMode(.middle)
                 Spacer()
                 Button("Choose…") {
-                    inputURL = openFilePanel(allowedTypes: ["mp4", "mov", "m4a", "wav", "mp3", "aac", "mkv"])
+                    inputURL = openFilePanel(allowedTypes: [
+                        "mp4", "mov", "m4a", "wav", "mp3", "aac", "mkv",
+                    ])
                 }
             }
 
@@ -98,7 +107,10 @@ struct ContentView: View {
                 let ffmpeg = WhisperCLI.resolveFFmpegPath()
                 let ffmpegResult = try WhisperCLI.runProcess(
                     executable: ffmpeg,
-                    args: ["-y", "-i", inputPath, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", tempWav.path]
+                    args: [
+                        "-y", "-i", inputPath, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
+                        tempWav.path,
+                    ]
                 )
                 if ffmpegResult.exitCode != 0 {
                     return (status: "ffmpeg failed:\n\(ffmpegResult.stderr)", transcript: "")
@@ -106,7 +118,10 @@ struct ContentView: View {
 
                 let whisperResult = try WhisperCLI.runProcess(
                     executable: whisperPathLocal,
-                    args: ["-m", modelPath, "-f", tempWav.path, "-otxt", "-of", tempWav.deletingPathExtension().path]
+                    args: [
+                        "-m", modelPath, "-f", tempWav.path, "-otxt", "-of",
+                        tempWav.deletingPathExtension().path,
+                    ]
                 )
                 if whisperResult.exitCode != 0 {
                     return (status: "whisper failed:\n\(whisperResult.stderr)", transcript: "")
@@ -133,7 +148,7 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.allowedFileTypes = allowedTypes
+        panel.allowedContentTypes = allowedTypes.compactMap { UTType(filenameExtension: $0) }
         let result = panel.runModal()
         return result == .OK ? panel.url : nil
     }
@@ -145,7 +160,7 @@ enum WhisperCLI {
             "/opt/homebrew/bin/whisper",
             "/usr/local/bin/whisper",
             "/opt/homebrew/bin/whisper-cpp",
-            "/usr/local/bin/whisper-cpp"
+            "/usr/local/bin/whisper-cpp",
         ]
         for path in candidates where FileManager.default.isExecutableFile(atPath: path) {
             return path
@@ -156,7 +171,7 @@ enum WhisperCLI {
     static func resolveFFmpegPath() -> String {
         let candidates = [
             "/opt/homebrew/bin/ffmpeg",
-            "/usr/local/bin/ffmpeg"
+            "/usr/local/bin/ffmpeg",
         ]
         for path in candidates where FileManager.default.isExecutableFile(atPath: path) {
             return path
@@ -164,7 +179,9 @@ enum WhisperCLI {
         return "ffmpeg"
     }
 
-    static func runProcess(executable: String, args: [String]) throws -> (exitCode: Int32, stdout: String, stderr: String) {
+    static func runProcess(executable: String, args: [String]) throws -> (
+        exitCode: Int32, stdout: String, stderr: String
+    ) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = args

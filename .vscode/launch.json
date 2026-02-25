@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Whisper}",
+            "name": "Debug WhisperGUI",
+            "program": "${workspaceFolder:Whisper}/.build/debug/WhisperGUI",
+            "preLaunchTask": "swift: Build Debug WhisperGUI"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Whisper}",
+            "name": "Release WhisperGUI",
+            "program": "${workspaceFolder:Whisper}/.build/release/WhisperGUI",
+            "preLaunchTask": "swift: Build Release WhisperGUI"
+        }
+    ]
+}
